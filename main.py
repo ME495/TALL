@@ -7,6 +7,9 @@ from sklearn.metrics import average_precision_score
 import pickle
 import vs_multilayer
 import operator
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 def dense_to_one_hot(labels_dense, num_classes):
     """Convert class labels from scalars to one-hot vectors."""
@@ -154,16 +157,18 @@ def run_training():
     batch_size = 56
     train_csv_path = "./exp_data/TACoS/train_clip-sentvec.pkl"
     test_csv_path = "./exp_data/TACoS/test_clip-sentvec.pkl"
-    test_feature_dir="../TACOS/Interval128_256_overlap0.8_c3d_fc6/"
-    train_feature_dir = "../TACOS/Interval64_128_256_512_overlap0.8_c3d_fc6/"
+    test_feature_dir="/data02/chengjian19/dataset/TACoS/Interval128_256_overlap0.8_c3d_fc6/"
+    train_feature_dir = "/data02/chengjian19/dataset/TACoS/Interval64_128_256_512_overlap0.8_c3d_fc6/"
+    save_path = './ckpt/TALL_c3d.ckpt'
     
     model = ctrl_model.CTRL_Model(batch_size, train_csv_path, test_csv_path, test_feature_dir, train_feature_dir)
     test_result_output=open("ctrl_test_results.txt", "w")
     with tf.Graph().as_default():
 		
         loss_align_reg, vs_train_op, vs_eval_op, offset_pred, loss_reg = model.construct_model()
+        saver = tf.train.Saver(max_to_keep=50)
         # Create a session for running Ops on the Graph.
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 0.2)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 0.5)
         sess = tf.Session(config = tf.ConfigProto(gpu_options = gpu_options))
         # Run the Op to initialize the variables.
         init = tf.initialize_all_variables()
@@ -179,6 +184,7 @@ def run_training():
                 print('Step %d: loss = %.3f (%.3f sec)' % (step, loss_value, duration))
 
             if (step+1) % 2000 == 0:
+                saver.save(sess, save_path, global_step=step+1)
                 print "Start to test:-----------------\n"
                 movie_length_info=pickle.load(open("./video_allframes_info.pkl"))
                 do_eval_slidingclips(sess, vs_eval_op, model, movie_length_info, step+1, test_result_output)
