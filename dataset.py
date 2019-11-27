@@ -53,7 +53,7 @@ class TrainingDataSet(object):
             self.movie_clip_names[movie_name].append(k)
         self.movie_names = list(movie_names_set)
         self.visual_feature_dim = 4096*3
-        self.sent_vec_dim = 2400
+        self.sent_vec_dim = 4800
         self.num_samples = len(self.clip_sentence_pairs)
         self.sliding_clip_path = sliding_dir
         print str(len(self.clip_sentence_pairs))+" clip-sentence pairs are readed"
@@ -189,7 +189,7 @@ class TestingDataSet(object):
         self.batch_size = batch_size
         self.image_dir = img_dir
         print "Reading testing data list from "+csv_path
-        self.semantic_size = 2400
+        self.semantic_size = 4800
         csv = pickle.load(open(csv_path))
         self.clip_sentence_pairs = []
         for l in csv:
